@@ -42,29 +42,27 @@ while True:
 
 #unpack
     img = np.reshape( unpack(len(s)*'B',s), (28,28)) 
-    lbl[index].append(img) #각 숫자영역별로 해당이미지를 추가
-    k=k+1
     resized = misc.imresize(img,(10,10))
-
-    plt.subplot(1,2,1),plt.imshow(resized,cmap = cm.binary)
     ret,thresh = cv2.threshold(resized,75,255,cv2.THRESH_BINARY)
-    plt.subplot(1,2,2),plt.imshow(thresh,cmap = cm.binary)
+    #lbl[index].append(ret) #각 숫자영역별로 해당이미지를 추가
+    k=k+1
+    filename = '%s/%s.jpg'%(index,k)
+    misc.imsave(filename, thresh)
+    #plt.subplot(1,2,1),plt.imshow(resized,cmap = cm.binary)
+    #plt.subplot(1,2,2),plt.imshow(thresh,cmap = cm.binary)
     #plt.show()
-    if k>20:
-        break
 #print(img)
 print(img.shape,img.dtype)
 #plt.imshow(img,cmap = cm.binary) #binary형태의 이미지 설정
 #plt.show()
-misc.imsave('outfile.jpg', resized)
 #print(np.shape(lbl)) #label별로 잘 지정됬는지 확인
 
 print("read done",k)
 
 # lbl 에 이미지들 있음.
 
-resized = misc.imresize(img,(10,10))
+#resized = misc.imresize(img,(10,10))
 
 
-plt.title(index)
-plt.show()
+#plt.title(index)
+#plt.show()
