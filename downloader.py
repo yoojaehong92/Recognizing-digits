@@ -67,7 +67,4 @@ for stage in ["train", "test"]:
         misc.imsave(filename+'_bin.jpg', thresh)
         misc.imsave(filename+'_org.jpg', img)
         k += 1
-
-        if k >=30:
-            break
     print("read done", k, stage)
