@@ -8,8 +8,8 @@ import gzip
 
 url_train_image = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
 url_train_label = 'http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz'
-url_test_image = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
-url_test_label = 'http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz'
+url_test_image = 'http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz'
+url_test_label = 'http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz'
 
 urls = {
         'train': [url_train_image, url_train_label],
@@ -62,7 +62,12 @@ for stage in ["train", "test"]:
         # binarization
         ret, thresh = cv2.threshold(resized, 75, 255, cv2.THRESH_BINARY)
         # save binary image
-        filename = '%s/%s/%s.jpg' % (wd, index, k)
-        misc.imsave(filename, thresh)
+        filename = '%s/%s/%s' % (wd, index, k)
+        misc.imsave(filename+'_rsz.jpg', resized)
+        misc.imsave(filename+'_bin.jpg', thresh)
+        misc.imsave(filename+'_org.jpg', img)
         k += 1
+
+        if k >=30:
+            break
     print("read done", k, stage)
