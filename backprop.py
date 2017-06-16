@@ -1,3 +1,4 @@
+
 from math import exp
 from random import seed
 from random import random
@@ -25,6 +26,13 @@ urls = {
             'label': url_test_label
             }
         }
+
+
+n_inputs = 100
+n_outputs = 10
+
+learning_rate = 0.5
+n_epoch = 20
 
 # Initialize a network
 def initialize_network(n_inputs, n_hidden, n_outputs):
@@ -107,8 +115,16 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
 
 
 def make_dataset(stage):
+    print('start making %s dataset'%(stage))
+
     dataset = []
+
+    print('start downloading %s image from %s'%(stage,urls[stage]['image']))
+
     fp_image = gzip.open(request.urlretrieve(urls[stage]['image'])[0], 'rb')
+
+    print('start downloading %s label from %s'%(stage,urls[stage]['label']))
+
     fp_label = gzip.open(request.urlretrieve(urls[stage]['label'])[0], 'rb')
 
     img = np.zeros((28, 28))  # 이미지가 저장될 부분
@@ -138,34 +154,47 @@ def make_dataset(stage):
         # resize from 28x28 to 10x10
         resized = misc.imresize(img, (10, 10))
         # binarization
-        ret, thresh = cv2.threshold(resized, 75, 255, cv2.THRESH_BINARY)
+        # ret, thresh = cv2.threshold(resized, 75, 255, cv2.THRESH_BINARY)
         # save binary image
         datum = list(resized.flat)
         datum.append(label)
-        
-        dataset.append(datum)
-    print(len(dataset))
-    return dataset
-    
 
-    print (datum)
+        dataset.append(datum)
+
+    print('complete resizing MNIST dataset to 10 x 10 dataset')
+    
+    return dataset
 
 def normalize_dataset(dataset):
+    print('start normalizing data')
     for row in dataset:
         for i in range(len(row)-1):
             row[i] = row[i] / 255
 
+# Make a prediction with a network
+def predict(network, row):
+    outputs = forward_propagate(network, row)
+    return outputs.index(max(outputs))
+
 if __name__ == "__main__":
     # Test training backprop algorithm
-    dataset = make_dataset('test')
+
+    n_hidden = 10
+
+    dataset = make_dataset('train')
     normalize_dataset(dataset)
-    n_inputs = len(dataset[0]) - 1
-    n_outputs = len(set([row[-1] for row in dataset]))
 
-    network = initialize_network(n_inputs, 11, n_outputs)
-    train_network(network, dataset, 0.5, 20, n_outputs)
-    for layer in network:
-        print(layer)
-
-
-
+    os.makedirs('trained_networks', exist_ok=True)
+    for i in range(20):
+        # filename : numberOfHiddenNodes_LearningRate_numberOfEpoch
+        filename = '%d_%f_%d'%(n_hidden + i, learning_rate, n_epoch)
+        print('start training : %s', filename)
+        network = initialize_network(n_inputs, n_hidden + i, n_outputs)
+        train_network(network, dataset, learning_rate, n_epoch, n_outputs)
+        f = open('trained_networks/' + filename,'w')
+        for layer in network:
+            print(layer)
+            f.write(str(layer))
+            f.write(',')
+        f.close()
+    
