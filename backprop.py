@@ -1,10 +1,8 @@
 
 from math import exp
-from random import seed
 from random import random
 import numpy as np
 import os
-import cv2
 from struct import unpack
 from scipy import misc
 from urllib import request
@@ -34,14 +32,16 @@ n_outputs = 10
 learning_rate = 0.5
 n_epoch = 20
 
+
 # Initialize a network
 def initialize_network(n_inputs, n_hidden, n_outputs):
     network = list()
-    hidden_layer = [{'weights':[random() for i in range(n_inputs + 1)]} for i in range(n_hidden)]
+    hidden_layer = [{'weights': [random() for i in range(n_inputs + 1)]} for i in range(n_hidden)]
     network.append(hidden_layer)
-    output_layer = [{'weights':[random() for i in range(n_hidden + 1)]} for i in range(n_outputs)]
+    output_layer = [{'weights': [random() for i in range(n_hidden + 1)]} for i in range(n_outputs)]
     network.append(output_layer)
     return network
+
 
 # Calculate neuron activation for an input
 def activate(weights, inputs):
@@ -50,9 +50,11 @@ def activate(weights, inputs):
         activation += weights[i] * inputs[i]
     return activation
 
+
 # Transfer neuron activation
 def transfer(activation):
     return 1.0 / (1.0 + exp(-activation))
+
 
 # Forward propagate input to a network output
 def forward_propagate(network, row):
@@ -66,9 +68,11 @@ def forward_propagate(network, row):
         inputs = new_inputs
     return inputs
 
+
 # Calculate the derivative of an neuron output
 def transfer_derivative(output):
     return output * (1.0 - output)
+
 
 # Backpropagate error and store in neurons
 def backward_propagate_error(network, expected):
@@ -89,6 +93,7 @@ def backward_propagate_error(network, expected):
             neuron = layer[j]
             neuron['delta'] = errors[j] * transfer_derivative(neuron['output'])
 
+
 # Update network weights with error
 def update_weights(network, row, l_rate):
     for i in range(len(network)):
@@ -99,6 +104,7 @@ def update_weights(network, row, l_rate):
             for j in range(len(inputs)):
                 neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
             neuron['weights'][-1] += l_rate * neuron['delta']
+
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, l_rate, n_epoch, n_outputs):
@@ -115,29 +121,28 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
 
 
 def make_dataset(stage):
-    print('start making %s dataset'%(stage))
+    print('start making %s dataset' % (stage))
 
     dataset = []
 
-    print('start downloading %s image from %s'%(stage,urls[stage]['image']))
+    for file in ['image', 'label']:
+        if not os.path.isfile(stage + '_' + file):
+            print('start downloading %s from %s' % (stage + '_' + file, urls[stage][file]))
+            request.urlretrieve(urls[stage][file], stage + '_' + file)
+        else:
+            print('%s already downloaded' % (stage + '_' + file))
 
-    fp_image = gzip.open(request.urlretrieve(urls[stage]['image'])[0], 'rb')
+    fp_image = gzip.open(stage + '_image', 'rb')
 
-    print('start downloading %s label from %s'%(stage,urls[stage]['label']))
-
-    fp_label = gzip.open(request.urlretrieve(urls[stage]['label'])[0], 'rb')
+    fp_label = gzip.open(stage + '_label', 'rb')
 
     img = np.zeros((28, 28))  # 이미지가 저장될 부분
-
-    index = 0
 
     # drop header info?
     s = fp_image.read(16)    # read first 16byte
     l = fp_label.read(8)     # read first  8byte
 
-    # 숫자 데이터를 읽어서 해당하는 데이터를 지정하고 출력
-    k = 0                    # 테스트용 index
-    # read mnist and show number
+    # read mnist
     while True:
         # 784바이트씩 읽음
         s = fp_image.read(784)
@@ -153,48 +158,81 @@ def make_dataset(stage):
         img = np.reshape(unpack(len(s) * 'B', s), (28, 28))
         # resize from 28x28 to 10x10
         resized = misc.imresize(img, (10, 10))
-        # binarization
-        # ret, thresh = cv2.threshold(resized, 75, 255, cv2.THRESH_BINARY)
-        # save binary image
+
         datum = list(resized.flat)
         datum.append(label)
 
         dataset.append(datum)
 
     print('complete resizing MNIST dataset to 10 x 10 dataset')
-    
+
     return dataset
 
+
+# Divide pixel value by 255, so we can get normalized value that has 0 ~ 1
 def normalize_dataset(dataset):
     print('start normalizing data')
     for row in dataset:
         for i in range(len(row)-1):
             row[i] = row[i] / 255
 
+
 # Make a prediction with a network
 def predict(network, row):
     outputs = forward_propagate(network, row)
     return outputs.index(max(outputs))
 
-if __name__ == "__main__":
-    # Test training backprop algorithm
 
+def train():
     n_hidden = 10
 
     dataset = make_dataset('train')
     normalize_dataset(dataset)
 
     os.makedirs('trained_networks', exist_ok=True)
-    for i in range(20):
+    for i in range(30):
         # filename : numberOfHiddenNodes_LearningRate_numberOfEpoch
-        filename = '%d_%f_%d'%(n_hidden + i, learning_rate, n_epoch)
-        print('start training : %s', filename)
-        network = initialize_network(n_inputs, n_hidden + i, n_outputs)
-        train_network(network, dataset, learning_rate, n_epoch, n_outputs)
-        f = open('trained_networks/' + filename,'w')
-        for layer in network:
-            print(layer)
-            f.write(str(layer))
-            f.write(',')
-        f.close()
-    
+        filename = '%d_%.1f_%d' % (n_hidden + i, learning_rate, n_epoch)
+        if not os.path.isfile('trained_networks/' + filename):
+            print('start training : %s', filename)
+            network = initialize_network(n_inputs, n_hidden + i, n_outputs)
+            train_network(network, dataset, learning_rate, n_epoch, n_outputs)
+            f = open('trained_networks/' + filename, 'w')
+            for layer in network:
+                f.write(str(layer))
+                f.write(',')
+            f.close()
+        else:
+            print(filename + ' is trained already')
+
+
+def test():
+    dataset = make_dataset('test')
+    normalize_dataset(dataset)
+    network_list = os.listdir('trained_networks')
+    accuracy = []
+    for filename in network_list:
+        true = 0
+        f = open('trained_networks/' + filename)
+        network = eval(f.read()[:-1])
+
+        for datum in dataset:
+            prediction = predict(network, datum)
+
+            if datum[-1] == prediction:
+                true += 1
+
+        accuracy.append(true / len(dataset))
+
+    print(accuracy)
+
+    max_value = max(accuracy)
+    max_index = accuracy.index(max_value)
+
+    print(network_list[max_index][:2])
+
+
+if __name__ == "__main__":
+    # Test training backprop algorithm
+
+    test()
