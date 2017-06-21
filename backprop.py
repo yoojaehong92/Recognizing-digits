@@ -223,6 +223,7 @@ def test():
                 true += 1
 
         accuracy.append(true / len(dataset))
+        f.close()
 
     print(accuracy)
 
