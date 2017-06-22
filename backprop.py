@@ -36,8 +36,10 @@ n_epoch = 20
 # Initialize a network
 def initialize_network(n_inputs, n_hidden, n_outputs):
     network = list()
+    # 히든 레이어의 노드의 숫자만큼 히든 레이어를 초기화 한다. 이떄 각 노드에는 인풋 노드의 숫자만큼 웨이트와 1개의 bias가 존재한다.
     hidden_layer = [{'weights': [random() for i in range(n_inputs + 1)]} for i in range(n_hidden)]
     network.append(hidden_layer)
+    # 아웃풋 레이어의 노드의 숫자만큼 아웃풋 레이어를 초기화 한다. 이떄 각 노드에는 히든 노드의 숫자만큼 웨이트와 1개의 bias가 존재한다.
     output_layer = [{'weights': [random() for i in range(n_hidden + 1)]} for i in range(n_outputs)]
     network.append(output_layer)
     return network
@@ -45,7 +47,7 @@ def initialize_network(n_inputs, n_hidden, n_outputs):
 
 # Calculate neuron activation for an input
 def activate(weights, inputs):
-    activation = weights[-1]
+    activation = weights[-1] # bias
     for i in range(len(weights)-1):
         activation += weights[i] * inputs[i]
     return activation
@@ -117,7 +119,7 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
             sum_error += sum([(expected[i]-outputs[i])**2 for i in range(len(expected))])
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
-        print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
+        print('epoch=%d' % (epoch))
 
 
 def make_dataset(stage):
@@ -237,3 +239,8 @@ if __name__ == "__main__":
     # Test training backprop algorithm
 
     test()
+
+
+
+
+    
