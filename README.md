@@ -1,5 +1,5 @@
-# AI_TermProject
-2017_Spring_AI
+# Recognizing-digits
+2017_Spring_AI_TermProject
 
 ## Enviroment
 Python3.6.1
